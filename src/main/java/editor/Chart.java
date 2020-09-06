@@ -18,6 +18,9 @@ public class Chart {
     public final int EVENTS = 5;
     public final int TIMING_POINTS = 6;
     public final int HIT_OBJECTS = 7;
+
+
+
     public Chart(File f){
         int state = 0;
         try {
@@ -40,17 +43,17 @@ public class Chart {
                                 if(line.startsWith("AudioFilename: ")) audio = line.replace("AudioFilename: ", "");
                                 break;
                             case METADATA:
-                                if(line.startsWith("Title:")) title = line.replace("Title:", "");
-                                if(line.startsWith("TitleUnicode:")) titleUnicode = line.replace("TitleUnicode:", "");
-                                if(line.startsWith("Artist:")) artist = line.replace("Artist:", "");
-                                if(line.startsWith("ArtistUnicode:")) artistUnicode = line.replace("ArtistUnicode:", "");
-                                if(line.startsWith("Version:")) version = line.replace("Version:", "");
+                                if(line.startsWith("Title:")) title = line.replaceFirst("[^:]+?:", "");
+                                if(line.startsWith("TitleUnicode:")) titleUnicode = line.replaceFirst("[^:]+?:", "");
+                                if(line.startsWith("Artist:")) artist = line.replaceFirst("[^:]+?:", "");
+                                if(line.startsWith("ArtistUnicode:")) artistUnicode = line.replaceFirst("[^:]+?:", "");
+                                if(line.startsWith("Version:")) version = line.replaceFirst("[^:]+?:", "");
                                 break;
                             case DIFFICULTY:
-                                if(line.startsWith("H")) hp = Integer.parseInt(line.replace("HPDrainRate:", ""));
-                                if(line.startsWith("C")) cs = Integer.parseInt(line.replace("CircleSize:", ""));
-                                if(line.startsWith("O")) od = Integer.parseInt(line.replace("OverallDifficulty:", ""));
-                                if(line.startsWith("A")) ar = Integer.parseInt(line.replace("ApproachRate:", ""));
+                                if(line.startsWith("H")) hp = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
+                                if(line.startsWith("C")) cs = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
+                                if(line.startsWith("O")) od = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
+                                if(line.startsWith("A")) ar = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
                                 break;
                             case EVENTS:
                                 if(line.startsWith("0,0,\"") && line.endsWith("\",0,0")) bg = line.split("\"")[1];

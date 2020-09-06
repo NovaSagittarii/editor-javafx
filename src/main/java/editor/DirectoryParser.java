@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 public class DirectoryParser {
     final private ArrayList<File> files = new ArrayList<>();
-    final private HashMap<String, Chart> charts = new HashMap<>();
+    final private ArrayList<String> charts = new ArrayList<>();
     public DirectoryParser(String PATH){
         File repo = new File(PATH);
         if(!repo.isDirectory()) throw new IllegalArgumentException("That's not a directory!");
@@ -14,12 +14,11 @@ public class DirectoryParser {
             System.out.println(f);
             files.add(f);
             if(f.getName().endsWith(".osu")){
-                Chart chart = new Chart(f);
-                charts.put(chart.getName(), chart);
+                charts.add(f.getName());
             }
         }
     }
-    public HashMap<String, Chart> getCharts(){
+    public ArrayList<String> getCharts(){
         return charts;
     }
 }
