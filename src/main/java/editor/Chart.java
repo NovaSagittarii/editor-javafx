@@ -1,6 +1,6 @@
 package editor;
 
-import org.apache.commons.io.FileUtils;
+import editor.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class Chart {
     public Chart(File f){
         int state = 0;
         try {
-            List<String> contents = FileUtils.readLines(f, "UTF-8");
+            List<String> contents = FileUtil.readLines(f);
 
             // Iterate the result to print each line of the file.
             for (String line : contents) {
