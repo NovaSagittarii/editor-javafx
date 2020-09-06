@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.util.List;
 
 public class Chart {
-    private String audio, bg;
-    private String title, titleUnicode, artist, artistUnicode, creator, version, source, tags, bID, sID;
-    private int hp, cs, od, ar;
+    private String path, audio, bg;
+    public String title, titleUnicode, artist, artistUnicode, creator, version, source, tags, bID, sID;
+    public int hp, cs, od, ar;
 
     public final int GENERAL = 1;
     public final int EDITOR = 2;
@@ -21,6 +21,7 @@ public class Chart {
 
     public Chart(File f){
         int state = 0;
+        path = f.getParentFile().getAbsolutePath();
         try {
             List<String> contents = FileUtil.readLines(f);
 
@@ -37,7 +38,7 @@ public class Chart {
                     case "[HitObjects]": state = HIT_OBJECTS; break;
                     default:
                         switch(state){
-                            case GENERAL:
+                            case GENERAL: /* TODO: just use a HashMap instead */
                                 if(line.startsWith("AudioFilename: ")) audio = line.replace("AudioFilename: ", "");
                                 break;
                             case METADATA:
@@ -66,4 +67,7 @@ public class Chart {
         }
     }
     public String getName(){ return version; }
+    public String export(){
+        return title + artist + version + hp + cs + od + ar + "|" + path + "|" + audio + "|" + bg;
+    }
 }

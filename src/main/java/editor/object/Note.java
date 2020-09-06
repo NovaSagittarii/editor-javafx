@@ -14,7 +14,7 @@ public class Note {
     public Note fromString(String line){
         int[] s = Arrays.stream(line.split(",")).mapToInt(Integer::parseInt).toArray();
         // x, y, t, type, hs, _t, sfx
-        if(s[3] > 100) return new LongNote(s[0], s[2], s[4], s[5]);
-        else           return new Note(s[0], s[2], s[4], s[5]);
+        if(s[3] > 100) return new LongNote(s[0], s[2], s[4], s[5], s[6]);
+        else           return new Note(s[0], s[2], s[4], s[6]);
     }
 }

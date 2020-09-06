@@ -6,6 +6,7 @@ module editor {
     requires javafx.fxml;
     requires okio;
     requires kotlin.stdlib;
+    requires core;
 
     opens editor;
 }

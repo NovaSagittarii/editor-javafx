@@ -1,6 +1,7 @@
 
 package editor.controller;
 
+import editor.object.Chart;
 import editor.parser.DirectoryParser;
 import javafx.event.ActionEvent;
 import javafx.scene.canvas.Canvas;
@@ -22,10 +23,13 @@ public class Controller {
         if(selectedDirectory != null) {
             System.out.println(selectedDirectory.getAbsolutePath());
             DirectoryParser d = new DirectoryParser(selectedDirectory.getAbsolutePath());
-            for(String s : d.getCharts()){
+            for(String s : d.getCharts().keySet()){
                 MenuItem menuItem = new MenuItem(s);
                 menuItem.setOnAction(event -> {
-                    System.out.println(((MenuItem) event.getSource()).getText());
+                    String PATH = d.getCharts().get(((MenuItem) event.getSource()).getText());
+                    System.out.println(PATH);
+                    Chart chart = new Chart(new File(PATH));
+                    System.out.println(chart.export());
                 });
                 list.getItems().add(menuItem);
             }
