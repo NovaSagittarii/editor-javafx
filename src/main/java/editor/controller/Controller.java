@@ -28,8 +28,8 @@ public class Controller {
                 menuItem.setOnAction(event -> {
                     String PATH = d.getCharts().get(((MenuItem) event.getSource()).getText());
                     System.out.println(PATH);
-                    Chart chart = new Chart(new File(PATH));
-                    System.out.println(chart.export());
+                    // Chart chart = new Chart(new File(PATH));
+                    // System.out.println(chart.export());
                 });
                 list.getItems().add(menuItem);
             }

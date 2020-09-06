@@ -30,7 +30,7 @@
                 </Menu>
               </menus>
             </MenuBar>
-            <AnchorPane height="200.0" width="200.0" fx:id="canvas"/>
+            <Canvas height="200.0" width="200.0" fx:id="canvas"/>
          </children>
       </VBox>
    </children>

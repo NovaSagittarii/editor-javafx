@@ -1,31 +1,34 @@
 package editor.object;
 
 import editor.util.FileUtil;
+import processing.core.PApplet;
+import processing.core.PGraphics;
+import processing.core.PImage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Chart {
-    private String path, audio, bg;
-    public String title, titleUnicode, artist, artistUnicode, creator, version, source, tags, bID, sID;
-    public int hp, cs, od, ar;
+    private PImage bg, bgRaw;
+    private Audio audio;
+    private String path, audioPath, bgPath;
+    private PApplet s;
+    public HashMap<String, String> metadata = new HashMap<>(); // String title, titleUnicode, artist, artistUnicode, creator, version, source, tags, bID, sID;
+    public ArrayList<Note> notes = new ArrayList<>();
+    public ArrayList<TimingPoint> timingPoints = new ArrayList<>();
+    public float hp, cs, od, ar;
 
-    public final int GENERAL = 1;
-    public final int EDITOR = 2;
-    public final int METADATA = 3;
-    public final int DIFFICULTY = 4;
-    public final int EVENTS = 5;
-    public final int TIMING_POINTS = 6;
-    public final int HIT_OBJECTS = 7;
+    public static final int GENERAL = 1, EDITOR = 2, METADATA = 3, DIFFICULTY = 4, EVENTS = 5, TIMING_POINTS = 6, HIT_OBJECTS = 7;
 
-    public Chart(File f){
+    public Chart(PApplet sketch, File f){
+        s = sketch;
         int state = 0;
         path = f.getParentFile().getAbsolutePath();
         try {
-            List<String> contents = FileUtil.readLines(f);
-
-            // Iterate the result to print each line of the file.
+            List<String> contents = FileUtil.readLines(f); // Iterate the result to print each line of the file.
             for (String line : contents) {
                 System.out.println(line);
                 switch(line){
@@ -38,36 +41,69 @@ public class Chart {
                     case "[HitObjects]": state = HIT_OBJECTS; break;
                     default:
                         switch(state){
-                            case GENERAL: /* TODO: just use a HashMap instead */
-                                if(line.startsWith("AudioFilename: ")) audio = line.replace("AudioFilename: ", "");
+                            case GENERAL:
+                                if(line.startsWith("AudioFilename: ")){
+                                    audioPath = line.replace("AudioFilename: ", "");
+                                    audio = new Audio(new File(path + "/" + audioPath));
+                                    audio.getClip().start();
+                                }
                                 break;
                             case METADATA:
-                                if(line.startsWith("Title:")) title = line.replaceFirst("[^:]+?:", "");
-                                if(line.startsWith("TitleUnicode:")) titleUnicode = line.replaceFirst("[^:]+?:", "");
-                                if(line.startsWith("Artist:")) artist = line.replaceFirst("[^:]+?:", "");
-                                if(line.startsWith("ArtistUnicode:")) artistUnicode = line.replaceFirst("[^:]+?:", "");
-                                if(line.startsWith("Version:")) version = line.replaceFirst("[^:]+?:", "");
+                                metadata.put(line.replaceFirst(":.*$", ""), line.replaceFirst("[^:]+?:", ""));
                                 break;
                             case DIFFICULTY:
-                                if(line.startsWith("H")) hp = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
-                                if(line.startsWith("C")) cs = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
-                                if(line.startsWith("O")) od = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
-                                if(line.startsWith("A")) ar = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
+                                if(line.startsWith("H")) hp = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
+                                if(line.startsWith("C")) cs = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
+                                if(line.startsWith("O")) od = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
+                                if(line.startsWith("A")) ar = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
                                 break;
                             case EVENTS:
-                                if(line.startsWith("0,0,\"") && line.endsWith("\",0,0")) bg = line.split("\"")[1];
+                                if(line.startsWith("0,0,\"") && line.endsWith("\",0,0")){
+                                    bgPath = line.split("\"")[1];
+                                    if(bgPath != null) bgRaw = s.loadImage(path + "/" + bgPath);
+                                    cacheBackground();
+                                }
                                 break;
-                            case TIMING_POINTS: /* TODO */ break;
-                            case HIT_OBJECTS: /* TODO */ break;
+                            case TIMING_POINTS:
+                                TimingPoint timingPoint = TimingPoint.fromString(line);
+                                if(timingPoint != null) timingPoints.add(timingPoint);
+                            break;
+                            case HIT_OBJECTS:
+                                Note note = Note.fromString(line);
+                                if(note != null) notes.add(note);
+                            break;
                         }
                 }
+                notes.sort(Note.compareByTime());
+                timingPoints.sort(TimingPoint.compareByTime());
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public String getName(){ return version; }
-    public String export(){
-        return title + artist + version + hp + cs + od + ar + "|" + path + "|" + audio + "|" + bg;
+    public PImage getBackground(){
+        if(bg == null || (bg.width != s.width || bg.height != s.height)) cacheBackground();
+        return bg;
     }
+    private void cacheBackground(){
+        PGraphics g = s.createGraphics(s.width, s.height);
+        g.beginDraw();
+        g.imageMode(g.CENTER);
+        g.background(0);
+        if(bgRaw != null){
+            g.image(bgRaw, s.width/2f, s.height/2f, (float) bgRaw.width*s.height/bgRaw.height, s.height);
+            g.fill(0, 200);
+            g.rect(0, 0, g.width, g.height);
+        }
+        g.endDraw();
+        bg = g.get();
+    }
+    public int getTime(){ return audio.getClip().getFramePosition() / (Audio.SAMPLE_RATE/1000); } // returns in MS
+    public int getFramePosition(){ return audio.getClip().getFramePosition(); }
+    public int getFrameLength(){ return audio.getClip().getFrameLength(); }
+    public String getName(){ return metadata.get("Version"); }
+    public String export(){
+        return String.join(",", metadata.values()) + path + "|" + audioPath + "|" + bgPath;
+    }
+    public float[] getSamples(){ return audio.getSamples(); }
 }

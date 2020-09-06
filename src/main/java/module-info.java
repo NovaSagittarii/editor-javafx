@@ -7,6 +7,8 @@ module editor {
     requires okio;
     requires kotlin.stdlib;
     requires core;
+    requires java.desktop;
+    requires jave.core;
 
     opens editor;
 }
