@@ -1,4 +1,4 @@
-package editor;
+package editor.object;
 
 import java.util.Arrays;
 

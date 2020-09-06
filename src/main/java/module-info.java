@@ -1,4 +1,6 @@
-module sample {
+module editor {
+    exports editor.controller;
+
     requires javafx.controls;
     requires javafx.graphics;
     requires javafx.fxml;

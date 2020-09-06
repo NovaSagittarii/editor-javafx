@@ -1,4 +1,4 @@
-package editor;
+package editor.object;
 
 import editor.util.FileUtil;
 
@@ -18,8 +18,6 @@ public class Chart {
     public final int EVENTS = 5;
     public final int TIMING_POINTS = 6;
     public final int HIT_OBJECTS = 7;
-
-
 
     public Chart(File f){
         int state = 0;

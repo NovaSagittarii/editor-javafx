@@ -1,4 +1,4 @@
-package editor;
+package editor.parser;
 
 import java.io.File;
 import java.util.ArrayList;

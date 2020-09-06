@@ -1,4 +1,4 @@
-package editor;
+package editor.object;
 
 public class TimingPoint {
 }

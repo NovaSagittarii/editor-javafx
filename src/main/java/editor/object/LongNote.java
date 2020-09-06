@@ -1,4 +1,4 @@
-package editor;
+package editor.object;
 
 public class LongNote extends Note {
     public int type = 128;
