@@ -1,4 +1,4 @@
-package sample;
+package editor;
 
 import org.apache.commons.io.FileUtils;
 

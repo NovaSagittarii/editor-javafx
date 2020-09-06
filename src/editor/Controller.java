@@ -1,4 +1,4 @@
-package sample;
+package editor;
 
 import javafx.event.ActionEvent;
 import javafx.scene.canvas.Canvas;
