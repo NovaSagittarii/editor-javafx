@@ -1,6 +1,5 @@
 package editor.object;
 
-import editor.EditorApplication;
 import editor.util.FileUtil;
 import processing.core.PApplet;
 import processing.core.PGraphics;
@@ -12,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-import static editor.object.Audio.SAMPLE_RATE;
 
 public class Chart {
     public static final int GENERAL = 1, EDITOR = 2, METADATA = 3, DIFFICULTY = 4, EVENTS = 5, TIMING_POINTS = 6, HIT_OBJECTS = 7;
@@ -81,7 +78,7 @@ public class Chart {
                 }
 
                 Collections.sort(this.notes);
-                Collections.sort(this.timingPoints);
+                timingPoints.sort(TimingPoint.compareByTime());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -107,15 +104,14 @@ public class Chart {
         bg = g.get();
     }
     public void alignTimingPoints(){
-        Collections.sort(this.timingPoints);
-
+        timingPoints.sort(TimingPoint.compareByTime());
         UninheritedTimingPoint red = null;
         for(TimingPoint tp : timingPoints){
             if(tp instanceof UninheritedTimingPoint) red = (UninheritedTimingPoint) tp;
             else if(red != null) ((InheritedTimingPoint) tp).parent = red;
         }
     }
-    public int getTime(){ return audio.getClip().getFramePosition() / (SAMPLE_RATE/1000); } // returns in MS
+    public int getTime(){ return audio.getClip().getFramePosition() / (Audio.SAMPLE_RATE/1000); } // returns in MS
     public int getFramePosition(){ return audio.getClip().getFramePosition(); }
     public int getFrameLength(){ return audio.getClip().getFrameLength(); }
     public String getName(){ return metadata.get("Version"); }
@@ -125,29 +121,5 @@ public class Chart {
 
     public float[] getSamples() {
         return audio.getSamples();
-    }
-
-    public void draw() {
-        PApplet sketch = EditorApplication.getInstance();
-        sketch.background(this.getBackground());
-        sketch.fill(0, 0, 0, 100);
-        sketch.ellipse(sketch.mouseX, sketch.mouseY, 15, 15);
-        sketch.fill(255);
-        sketch.text(this.getTime(), 100, 200);
-        int f = this.getFramePosition();
-        float[] s = this.getSamples();
-        //stroke(255);
-        sketch.noStroke();
-        sketch.fill(255);
-        int sampledDuration = 10000, sampledFrames = sampledDuration * SAMPLE_RATE / 1000, sampledChunkResolution = 3, sampledChunks = sketch.height / sampledChunkResolution, sampledChunkSize = sampledFrames / sampledChunks;
-
-        int k = 0;
-        for(int i = f; i < Math.min(this.getFrameLength(), f + sampledFrames); i += sampledChunkSize){
-            double sum = 0;
-            for(int j = i; j < Math.min(this.getFrameLength(), i + sampledChunkSize); j ++) sum += Math.abs(s[j]);
-            float pos = (float)sum/sampledChunkSize/32768.0f * 100 + 4;
-            sketch.rect(200, k*sampledChunkResolution, pos, sampledChunkResolution);
-            k ++;
-        }
     }
 }

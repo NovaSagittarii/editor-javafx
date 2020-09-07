@@ -35,12 +35,6 @@ public class EditorApplication extends PApplet {
     private int state = AWAIT;
     private boolean mp;
 
-    private static EditorApplication instance;
-
-    public static EditorApplication getInstance() {
-        return instance;
-    }
-
     public void settings(){
         noSmooth();
         size(500, 500);
@@ -88,7 +82,29 @@ public class EditorApplication extends PApplet {
                 }
             break;
             case COMPOSE:
-                chart.draw();
+                background(chart.getBackground());
+                fill(0, 0, 0, 100);
+                ellipse(mouseX, mouseY, 15, 15);
+                fill(255);
+                text(chart.getTime(), 100, 200);
+                int f = chart.getFramePosition();
+                float[] s = chart.getSamples();
+                //stroke(255);
+                noStroke();
+                fill(255);
+                int sampledDuration = 10000;
+                int sampledFrames = sampledDuration*SAMPLE_RATE/1000;
+                int sampledChunkResolution = 3;
+                int sampledChunks = height/sampledChunkResolution;
+                int sampledChunkSize = sampledFrames/sampledChunks;
+                int k = 0;
+                for(int i = f; i < Math.min(chart.getFrameLength(), f + sampledFrames); i += sampledChunkSize){
+                    double sum = 0;
+                    for(int j = i; j < Math.min(chart.getFrameLength(), i + sampledChunkSize); j ++) sum += Math.abs(s[j]);
+                    float pos = (float)sum/sampledChunkSize/32768.0f * 100 + 4;
+                    rect(200, k*sampledChunkResolution, pos, sampledChunkResolution);
+                    k ++;
+                }
                 break;
         }
         mp = false;
@@ -101,8 +117,6 @@ public class EditorApplication extends PApplet {
     public static void main(String[] args){
         String[] processingArgs = {"EditorApplication"};
         EditorApplication sketch = new EditorApplication();
-        instance = sketch;
-
         PApplet.runSketch(processingArgs, sketch);
     }
 }
