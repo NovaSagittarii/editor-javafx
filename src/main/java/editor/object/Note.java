@@ -30,6 +30,6 @@ public class Note implements Comparable<Note> {
 
     @Override
     public int compareTo(Note o) {
-        return this.time - o.time;
+        return Integer.compare(this.time, o.time);
     }
 }

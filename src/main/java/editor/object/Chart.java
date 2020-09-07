@@ -29,6 +29,7 @@ public class Chart {
         s = sketch;
         int state = 0;
         path = f.getParentFile().getAbsolutePath();
+        s.getSurface().setTitle("EditorApplication | editing " + f.getName());
         try {
             List<String> contents = FileUtil.readLines(f); // Iterate the result to print each line of the file.
             for (String line : contents) {
@@ -47,7 +48,7 @@ public class Chart {
                                 if (line.startsWith("AudioFilename: ")) {
                                     audioPath = line.replace("AudioFilename: ", "");
                                     audio = new Audio(new File(path + "/" + audioPath));
-                                    audio.getClip().start();
+                                    // audio.getClip().start();
                                 }
                                 break;
                             case METADATA:
@@ -114,6 +115,7 @@ public class Chart {
     public int getTime(){ return audio.getClip().getFramePosition() / (Audio.SAMPLE_RATE/1000); } // returns in MS
     public int getFramePosition(){ return audio.getClip().getFramePosition(); }
     public int getFrameLength(){ return audio.getClip().getFrameLength(); }
+    public Audio getAudio(){ return audio; }
     public String getName(){ return metadata.get("Version"); }
     public String export(){
         return String.join(",", metadata.values()) + path + "|" + audioPath + "|" + bgPath;
