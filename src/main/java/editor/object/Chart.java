@@ -112,9 +112,9 @@ public class Chart {
             else if(red != null) ((InheritedTimingPoint) tp).parent = red;
         }
     }
-    public int getTime(){ return audio.getClip().getFramePosition() / (Audio.SAMPLE_RATE/1000); } // returns in MS
-    public int getFramePosition(){ return audio.getClip().getFramePosition(); }
-    public int getFrameLength(){ return audio.getClip().getFrameLength(); }
+    public double getTime(){ return audio.getAudioCue().getFramePosition(0) / (Audio.SAMPLE_RATE/1000); } // returns in MS
+    public double getFramePosition(){ return audio.getAudioCue().getFramePosition(0); }
+    public long getFrameLength(){ return audio.getAudioCue().getFrameLength(); }
     public Audio getAudio(){ return audio; }
     public String getName(){ return metadata.get("Version"); }
     public String export(){

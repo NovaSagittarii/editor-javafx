@@ -1,5 +1,7 @@
 package editor.object;
 
+import editor.audio.AudioCue;
+import editor.audio.AudioMixer;
 import ws.schild.jave.*;
 
 import javax.sound.sampled.*;
@@ -13,7 +15,7 @@ public class Audio {
     static final int SAMPLE_RATE = 44100;
 
     private File wav;
-    private Clip audioClip;
+    private AudioCue audioCue;
     private float[] samples;
 
     public Audio(File sourceFile) {
@@ -83,17 +85,9 @@ public class Audio {
             for (int i = 0; i < samples.length; i++) samples[i] *= normal;
 
             try {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(wav);
-                DataLine.Info info = new DataLine.Info(Clip.class, fmt);
-                audioClip = (Clip) AudioSystem.getLine(info);
-                // audioClip.addLineListener(this);
-                audioClip.open(audioStream);
-            } catch (UnsupportedAudioFileException ex) {
-                System.out.println("The specified audio file is not supported.");
-                ex.printStackTrace();
-            } catch (LineUnavailableException ex) {
-                System.out.println("Audio line for playing back is unavailable.");
-                ex.printStackTrace();
+                audioCue = AudioCue.makeStereoCue(wav.toURI().toURL(), 1);
+                audioCue.open();
+                System.out.println(audioCue.obtainInstance());
             } catch (IOException ex) {
                 System.out.println("Error playing the audio file.");
                 ex.printStackTrace();
@@ -131,7 +125,5 @@ public class Audio {
         return samples;
     }
 
-    public Clip getClip() {
-        return audioClip;
-    }
+    public AudioCue getAudioCue() { return audioCue; }
 }

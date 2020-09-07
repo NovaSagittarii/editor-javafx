@@ -90,9 +90,9 @@ public class EditorApplication extends PApplet {
                 fill(0, 0, 0, 100);
                 ellipse(mouseX, mouseY, 15, 15);
                 fill(255);
-                text(chart.getTime(), 100, 200);
+                text((int)chart.getTime(), 100, 200);
                 text(frameRate + "fps", 100, 250);
-                int f = chart.getFramePosition();
+                double f = chart.getFramePosition();
                 float[] s = chart.getSamples();
                 //stroke(255);
                 noStroke();
@@ -103,9 +103,9 @@ public class EditorApplication extends PApplet {
                 int sampledChunks = height/sampledChunkResolution;
                 int sampledChunkSize = sampledFrames/sampledChunks;
                 int k = 0;
-                for(int i = f; i < Math.min(chart.getFrameLength(), f + sampledFrames); i += sampledChunkSize){
+                for(double i = f; i < Math.min(chart.getFrameLength(), f + sampledFrames); i += sampledChunkSize){
                     double sum = 0;
-                    for(int j = i; j < Math.min(chart.getFrameLength(), i + sampledChunkSize); j ++) sum += Math.abs(s[j]);
+                    for(double j = i; j < Math.min(chart.getFrameLength(), i + sampledChunkSize); j ++) sum += Math.abs(s[(int) j]);
                     float pos = (float)sum/sampledChunkSize/32768.0f * 100 + 1;
                     rect(200, k*sampledChunkResolution, pos, sampledChunkResolution);
                     k ++;
@@ -114,7 +114,7 @@ public class EditorApplication extends PApplet {
                 rect(200, height/2, 1, height);
                 ellipse(mouseX, mouseY, mousePressed ? 15 : 10, 10);
                 stroke(255);
-                line(300, 200, (float) (100*Math.cos((double)frameCount/50)), (float) (100*Math.sin((double)frameCount/50)));
+                line(300, 200, (float) (300+100*Math.cos((double)frameCount/50)), (float) (200+100*Math.sin((double)frameCount/50)));
                 break;
         }
         mp = false;
@@ -131,8 +131,8 @@ public class EditorApplication extends PApplet {
 
     public void keyPressed() {
         keys.add(keyCode);
-        if(chart.getAudio().getClip().isRunning()) chart.getAudio().getClip().stop();
-        else chart.getAudio().getClip().start();
+        if(chart.getAudio().getAudioCue().getIsPlaying(0)) chart.getAudio().getAudioCue().stop(0);
+        else chart.getAudio().getAudioCue().start(0);
     }
 
     public void keyReleased() {
