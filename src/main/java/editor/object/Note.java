@@ -3,7 +3,7 @@ package editor.object;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class Note {
+public class Note implements Comparable<Note> {
     public int column, time, hitsounds, type = 1;
     public String extras;
 
@@ -23,12 +23,13 @@ public class Note {
         else return new Note(s[0], s[2], s[4], l[5]);
     }
 
-    static Comparator<Note> compareByTime() {
-        return Comparator.comparingInt(o -> o.time);
-    }
-
     public String export() {
         //x,y,time,type,hitSound,objectParams,hitSample
         return column + ",192," + time + ",0," + hitsounds + "," + extras;
+    }
+
+    @Override
+    public int compareTo(Note o) {
+        return this.time - o.time;
     }
 }

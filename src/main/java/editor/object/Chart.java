@@ -8,6 +8,7 @@ import processing.core.PImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -75,7 +76,8 @@ public class Chart {
                                 break;
                         }
                 }
-                notes.sort(Note.compareByTime());
+
+                Collections.sort(this.notes);
                 timingPoints.sort(TimingPoint.compareByTime());
             }
         } catch (IOException e) {
