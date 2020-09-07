@@ -1,15 +1,10 @@
 package editor.object;
 
+import ws.schild.jave.*;
+
 import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
-
-import ws.schild.jave.AudioAttributes;
-import ws.schild.jave.Encoder;
-import ws.schild.jave.EncoderException;
-import ws.schild.jave.EncodingAttributes;
-import ws.schild.jave.MultimediaObject;
-
 
 
 // https://github.com/goxr3plus/Java-Audio-Wave-Spectrum-API/blob/master/src/soundcloud/BoxWaveform.java
@@ -21,10 +16,10 @@ public class Audio {
     private Clip audioClip;
     private float[] samples;
 
-    public Audio(File sourceFile){
-        if(sourceFile.getName().endsWith(".wav")){
+    public Audio(File sourceFile) {
+        if (sourceFile.getName().endsWith(".wav")) {
             wav = sourceFile;
-        }else {
+        } else {
             try {
                 wav = File.createTempFile("decoded_audio", ".wav");
                 transcodeToWav(sourceFile, wav);
@@ -52,8 +47,8 @@ public class Audio {
             int frame = 0;
             int bRead;
             System.out.println(samples.length);
-            while ( ( bRead = in.read(buf) ) > -1) {
-                for (int b = 0; b < bRead;) {
+            while ((bRead = in.read(buf)) > -1) {
+                for (int b = 0; b < bRead; ) {
                     double sum = 0;
                     for (int c = 0; c < chs; c++) {
                         if (bytes == 1) {
@@ -61,23 +56,23 @@ public class Audio {
                         } else {
                             int sample = 0;
                             if (big) {
-                                sample |= ( buf[b++] & 0xFF ) << 8;
-                                sample |= ( buf[b++] & 0xFF );
+                                sample |= (buf[b++] & 0xFF) << 8;
+                                sample |= (buf[b++] & 0xFF);
                                 b += bytes - 2;
                             } else {
                                 b += bytes - 2;
-                                sample |= ( buf[b++] & 0xFF );
-                                sample |= ( buf[b++] & 0xFF ) << 8;
+                                sample |= (buf[b++] & 0xFF);
+                                sample |= (buf[b++] & 0xFF) << 8;
                             }
                             final int sign = 1 << 15;
                             final int mask = -1 << 16;
-                            if ( ( sample & sign ) == sign) {
+                            if ((sample & sign) == sign) {
                                 sample |= mask;
                             }
                             sum += sample;
                         }
                     }
-                    samples[frame++] = (float) ( sum / chs );
+                    samples[frame++] = (float) (sum / chs);
                 }
             }
             float normal = 0;
@@ -85,7 +80,7 @@ public class Audio {
                 if (sample > normal)
                     normal = sample;
             normal = 32768.0f / normal; // normalized scaling
-            for(int i = 0; i < samples.length; i ++) samples[i] *= normal;
+            for (int i = 0; i < samples.length; i++) samples[i] *= normal;
 
             try {
                 AudioInputStream audioStream = AudioSystem.getAudioInputStream(wav);
@@ -117,7 +112,7 @@ public class Audio {
      * @param destinationFile
      * @throws EncoderException
      */
-    private static void transcodeToWav(File sourceFile , File destinationFile) throws Exception {
+    private static void transcodeToWav(File sourceFile, File destinationFile) throws Exception {
         AudioAttributes audio = new AudioAttributes();
         audio.setCodec("pcm_s16le");
         audio.setChannels(2);
@@ -127,7 +122,16 @@ public class Audio {
         attributes.setAudioAttributes(audio);
         new Encoder().encode(new MultimediaObject(sourceFile), destinationFile, attributes);
     }
-    public File getFile(){ return wav; }
-    public float[] getSamples(){ return samples; }
-    public Clip getClip(){ return audioClip; }
+
+    public File getFile() {
+        return wav;
+    }
+
+    public float[] getSamples() {
+        return samples;
+    }
+
+    public Clip getClip() {
+        return audioClip;
+    }
 }

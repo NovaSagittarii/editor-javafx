@@ -2,15 +2,6 @@ package editor;
 
 import editor.object.Chart;
 import editor.parser.DirectoryParser;
-/* import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.MenuItem;
-import javafx.stage.Stage;
-import javafx.scene.canvas.Canvas; */
-
 import processing.core.PApplet;
 
 import java.io.File;
@@ -49,7 +40,7 @@ public class EditorApplication extends PApplet {
         size(500, 500);
     }
 
-    public void setup(){
+    public void setup() {
         folderSelected(null);
         frameRate(240);
         imageMode(CENTER);
@@ -59,17 +50,17 @@ public class EditorApplication extends PApplet {
         noLoop();
     }
 
-    public void folderSelected(File selectedDirectory){
-        if(selectedDirectory != null) {
+    public void folderSelected(File selectedDirectory) {
+        if (selectedDirectory != null) {
             System.out.println(selectedDirectory.getAbsolutePath());
             dp = new DirectoryParser(selectedDirectory.getAbsolutePath());
             loop();
             state = SELECT;
-        }else selectFolder("Select a folder to process:", "folderSelected");
+        } else selectFolder("Select a folder to process:", "folderSelected");
     }
 
-    public void draw(){
-        switch(state){
+    public void draw() {
+        switch (state) {
             case SELECT:
                 background(200);
                 int y = 0;
@@ -114,12 +105,12 @@ public class EditorApplication extends PApplet {
                     rect(200, k*sampledChunkResolution, pos, sampledChunkResolution);
                     k ++;
                 }
-            break;
+                break;
         }
         mp = false;
     }
 
-    public void mousePressed(){
+    public void mousePressed() {
         mp = true;
     }
 
