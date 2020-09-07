@@ -98,6 +98,14 @@ public class Chart {
         g.endDraw();
         bg = g.get();
     }
+    public void alignTimingPoints(){
+        timingPoints.sort(TimingPoint.compareByTime());
+        UninheritedTimingPoint red = null;
+        for(TimingPoint tp : timingPoints){
+            if(tp instanceof UninheritedTimingPoint) red = (UninheritedTimingPoint) tp;
+            else if(red != null) ((InheritedTimingPoint) tp).parent = red;
+        }
+    }
     public int getTime(){ return audio.getClip().getFramePosition() / (Audio.SAMPLE_RATE/1000); } // returns in MS
     public int getFramePosition(){ return audio.getClip().getFramePosition(); }
     public int getFrameLength(){ return audio.getClip().getFrameLength(); }

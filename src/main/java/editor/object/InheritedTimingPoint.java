@@ -2,6 +2,7 @@ package editor.object;
 
 public class InheritedTimingPoint extends TimingPoint {
     public double sv;
+    public UninheritedTimingPoint parent;
     public InheritedTimingPoint(double t){
         super(t);
         sv = 1.00;
