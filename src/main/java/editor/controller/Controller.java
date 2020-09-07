@@ -1,7 +1,5 @@
-
 package editor.controller;
 
-import editor.object.Chart;
 import editor.parser.DirectoryParser;
 import javafx.event.ActionEvent;
 import javafx.scene.canvas.Canvas;
@@ -13,17 +11,17 @@ import javafx.stage.Stage;
 import java.io.File;
 
 public class Controller {
+    private final DirectoryChooser directoryChooser = new DirectoryChooser();
     public Canvas canvas;
     public Menu list;
     private Stage primaryStage;
-    private final DirectoryChooser directoryChooser = new DirectoryChooser();
 
     public void open(ActionEvent actionEvent) {
         File selectedDirectory = directoryChooser.showDialog(primaryStage);
-        if(selectedDirectory != null) {
+        if (selectedDirectory != null) {
             System.out.println(selectedDirectory.getAbsolutePath());
             DirectoryParser d = new DirectoryParser(selectedDirectory.getAbsolutePath());
-            for(String s : d.getCharts().keySet()){
+            for (String s : d.getCharts().keySet()) {
                 MenuItem menuItem = new MenuItem(s);
                 menuItem.setOnAction(event -> {
                     String PATH = d.getCharts().get(((MenuItem) event.getSource()).getText());
