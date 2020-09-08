@@ -57,5 +57,9 @@
     <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jetbrains.kotlin:kotlin-test:1.4.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jetbrains.kotlin:kotlin-test-common:1.4.0" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-swing:11.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-swing:win:11.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-media:11.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-media:win:11.0.1" level="project" />
   </component>
 </module>

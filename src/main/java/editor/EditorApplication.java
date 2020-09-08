@@ -3,10 +3,11 @@ package editor;
 import editor.object.Chart;
 import editor.parser.DirectoryParser;
 import editor.util.EditorUtil;
+import javafx.scene.media.MediaPlayer;
+import javafx.util.Duration;
 import processing.core.PApplet;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.TreeSet;
 
 /* public class EditorApplication extends Application {
@@ -46,7 +47,7 @@ public class EditorApplication extends PApplet {
 
     public void setup() {
         folderSelected(null);
-        frameRate(60);
+        frameRate(90);
         imageMode(CENTER);
         strokeCap(SQUARE);
         surface.setResizable(true);
@@ -90,8 +91,8 @@ public class EditorApplication extends PApplet {
                 fill(0, 0, 0, 100);
                 ellipse(mouseX, mouseY, 15, 15);
                 fill(255);
-                text((int)chart.getTime(), 100, 200);
-                text(frameRate + "fps", 100, 250);
+                text((int)(Math.floor(chart.getTime())), 100, 200);
+                text((int)frameRate + "fps", 100, 250);
                 double f = chart.getFramePosition();
                 float[] s = chart.getSamples();
                 //stroke(255);
@@ -111,7 +112,7 @@ public class EditorApplication extends PApplet {
                     k ++;
                 }
                 fill(50);
-                rect(200, height/2, 1, height);
+                rect(200, (float)height/2, 1, height);
                 ellipse(mouseX, mouseY, mousePressed ? 15 : 10, 10);
                 stroke(255);
                 line(300, 200, (float) (300+100*Math.cos((double)frameCount/50)), (float) (200+100*Math.sin((double)frameCount/50)));
@@ -122,6 +123,10 @@ public class EditorApplication extends PApplet {
 
     public void mousePressed() {
         // if(chart != null) chart.getAudio().getClip().start();
+        if(chart != null){
+            if(chart.getAudioPlayer().getStatus() == MediaPlayer.Status.PLAYING) chart.getAudioPlayer().pause();
+            chart.getAudioPlayer().seek(new Duration((double)mouseX/width*chart.getAudioPlayer().getTotalDuration().toMillis()));
+        }
         mp = true;
     }
 
@@ -131,8 +136,11 @@ public class EditorApplication extends PApplet {
 
     public void keyPressed() {
         keys.add(keyCode);
-        if(chart.getAudio().getAudioCue().getIsPlaying(0)) chart.getAudio().getAudioCue().stop(0);
-        else chart.getAudio().getAudioCue().start(0);
+        if(chart.getAudioPlayer().getStatus() == MediaPlayer.Status.PLAYING){
+            chart.getAudioPlayer().pause();
+            chart.getAudioPlayer().seek(chart.getAudioPlayer().getCurrentTime());
+        }
+        else chart.getAudioPlayer().play();
     }
 
     public void keyReleased() {

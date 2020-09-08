@@ -1,6 +1,8 @@
 package editor.object;
 
 import editor.util.FileUtil;
+import javafx.scene.media.AudioClip;
+import javafx.scene.media.MediaPlayer;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PImage;
@@ -33,7 +35,7 @@ public class Chart {
         try {
             List<String> contents = FileUtil.readLines(f); // Iterate the result to print each line of the file.
             for (String line : contents) {
-                System.out.println(line);
+                // System.out.println(line);
                 switch(line){
                     case "[General]": state = GENERAL; break;
                     case "[Editor]": state = EDITOR; break;
@@ -112,10 +114,11 @@ public class Chart {
             else if(red != null) ((InheritedTimingPoint) tp).parent = red;
         }
     }
-    public double getTime(){ return audio.getAudioCue().getFramePosition(0) / (Audio.SAMPLE_RATE/1000); } // returns in MS
-    public double getFramePosition(){ return audio.getAudioCue().getFramePosition(0); }
-    public long getFrameLength(){ return audio.getAudioCue().getFrameLength(); }
+    public double getTime(){ return getAudioPlayer().getCurrentTime().toMillis(); } // returns in MS
+    public int getFramePosition(){ return (int)(getAudioPlayer().getCurrentTime().toMillis() * ((double)Audio.SAMPLE_RATE/1000.0)); }
+    public int getFrameLength(){ return audio.getSamples().length; }
     public Audio getAudio(){ return audio; }
+    public MediaPlayer getAudioPlayer(){ return audio.getMediaPlayer(); }
     public String getName(){ return metadata.get("Version"); }
     public String export(){
         return String.join(",", metadata.values()) + path + "|" + audioPath + "|" + bgPath;

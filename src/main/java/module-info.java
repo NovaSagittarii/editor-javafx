@@ -9,6 +9,8 @@ module editor {
     requires core;
     requires java.desktop;
     requires jave.core;
+    requires javafx.swing;
+    requires javafx.media;
 
     opens editor;
 }

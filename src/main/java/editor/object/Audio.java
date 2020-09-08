@@ -1,31 +1,34 @@
 package editor.object;
 
-import editor.audio.AudioCue;
-import editor.audio.AudioMixer;
 import ws.schild.jave.*;
 
 import javax.sound.sampled.*;
-import java.io.File;
-import java.io.IOException;
-
+import java.io.*;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.embed.swing.JFXPanel;
 
 // https://github.com/goxr3plus/Java-Audio-Wave-Spectrum-API/blob/master/src/soundcloud/BoxWaveform.java
 
 public class Audio {
+    static final JFXPanel fxPanel = new JFXPanel(); // apparently you need to initialize JavaFX before using JavaFX things (like Media/MediaPlayer)
     static final int SAMPLE_RATE = 44100;
 
     private File wav;
-    private AudioCue audioCue;
+    private MediaPlayer mediaPlayer;
     private float[] samples;
 
     public Audio(File sourceFile) {
+        // convert to wav if needed (this is for drawing amplitude waveform)
         if (sourceFile.getName().endsWith(".wav")) {
             wav = sourceFile;
         } else {
             try {
+                long t = System.currentTimeMillis();
                 wav = File.createTempFile("decoded_audio", ".wav");
                 transcodeToWav(sourceFile, wav);
                 wav.deleteOnExit();
+                System.out.println("[wav] duration ms: " + (System.currentTimeMillis() - t));
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Fatal exception exiting....");
@@ -85,9 +88,10 @@ public class Audio {
             for (int i = 0; i < samples.length; i++) samples[i] *= normal;
 
             try {
-                audioCue = AudioCue.makeStereoCue(wav.toURI().toURL(), 1);
-                audioCue.open();
-                System.out.println(audioCue.obtainInstance());
+                long startTime = System.currentTimeMillis();
+                Media media = new Media(wav.toURI().toURL().toExternalForm());
+                mediaPlayer = new MediaPlayer(media);
+                System.out.println("[Clip] duration ms: " + (System.currentTimeMillis() - startTime));
             } catch (IOException ex) {
                 System.out.println("Error playing the audio file.");
                 ex.printStackTrace();
@@ -95,7 +99,7 @@ public class Audio {
         } catch (Exception e) {
             wav.delete();
             wav.deleteOnExit();
-            return;
+            e.printStackTrace();
         }
     }
 
@@ -125,5 +129,5 @@ public class Audio {
         return samples;
     }
 
-    public AudioCue getAudioCue() { return audioCue; }
+    public MediaPlayer getMediaPlayer() { return mediaPlayer; }
 }
