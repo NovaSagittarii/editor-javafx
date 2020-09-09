@@ -3,9 +3,9 @@ package editor.object;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class TimingPoint {
-    public double time;
-    public int meter, sampleSet, sampleIndex, volume, kiai;
+public class TimingPoint implements Comparable<TimingPoint> {
+    public double time, mspb;
+    public int meter, sampleSet, sampleIndex, volume, kiai, column = 0;
 
     public TimingPoint(double t) {
         time = t;
@@ -26,11 +26,16 @@ public class TimingPoint {
         int[] i = Arrays.stream(Arrays.copyOfRange(l, 2, l.length)).mapToInt(Integer::parseInt).toArray();
         double[] d = Arrays.stream(l).mapToDouble(Double::parseDouble).toArray();
         // time,beatLength,meter,sampleSet,sampleIndex,volume,uninherited,effects
+
         if (i[4] == 1) return new UninheritedTimingPoint(d[0], d[1], i[0], i[1], i[2], i[3], i[5]);
         else return new InheritedTimingPoint(d[0], d[1], i[0], i[1], i[2], i[3], i[5]);
     }
 
     static Comparator<TimingPoint> compareByTime() {
         return Comparator.comparingDouble(o -> o.time);
+    }
+
+    public int compareTo(TimingPoint o){
+        return (time == o.time) ? (this instanceof UninheritedTimingPoint ? (o instanceof UninheritedTimingPoint ? 0 : 1) : (o instanceof UninheritedTimingPoint ? -1 : 0)) : (time > o.time ? 1 : -1);
     }
 }

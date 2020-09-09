@@ -1,7 +1,7 @@
 package editor.object;
 
 public class UninheritedTimingPoint extends TimingPoint {
-    public double mspb, bpm;
+    public double bpm;
 
     public UninheritedTimingPoint(double t) {
         super(t);

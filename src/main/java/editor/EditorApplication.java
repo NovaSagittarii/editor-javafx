@@ -1,8 +1,6 @@
 package editor;
 
-import editor.object.Chart;
-import editor.object.LongNote;
-import editor.object.Note;
+import editor.object.*;
 import editor.parser.DirectoryParser;
 import editor.util.EditorUtil;
 import javafx.scene.media.MediaPlayer;
@@ -39,8 +37,8 @@ public class EditorApplication extends PApplet {
     private Chart chart;
     private EditorUtil e;
     private final TreeSet<Integer> keys = new TreeSet<>();
-    private int state = AWAIT;
-    private float zoom = 0.2f;
+    private int state = AWAIT, divisor = 1;
+    private float zoom = 0.75f;
     private boolean mp;
 
     public void settings(){
@@ -51,7 +49,7 @@ public class EditorApplication extends PApplet {
     public void setup() {
         folderSelected(null);
         e = new EditorUtil(4, width, height);
-        frameRate(90);
+        frameRate(120);
         imageMode(CENTER);
         strokeCap(SQUARE);
         surface.setResizable(true);
@@ -69,7 +67,7 @@ public class EditorApplication extends PApplet {
     }
 
     public void draw() {
-        if(chart != null && (width != e.w || height != e.h)) e.calibrate((int)chart.cs, width, height);
+        if(chart != null && (width != e.w || height != e.h)) e.calibrate(chart.cs, width, height);
         switch (state) {
             case SELECT:
                 background(200);
@@ -82,7 +80,7 @@ public class EditorApplication extends PApplet {
                         fill(20);
                         if(mp){
                             chart = new Chart(this, new File(dp.getCharts().get(s)));
-                            e.calibrate((int)chart.cs, width, height);
+                            e.calibrate(chart.cs, width, height);
                             System.out.println(chart.export());
                             // System.out.println(Arrays.toString(chart.getSamples()));
                             state = COMPOSE;
@@ -93,22 +91,21 @@ public class EditorApplication extends PApplet {
                 }
             break;
             case COMPOSE:
+                final double time = chart.getTime();
                 background(chart.getBackground());
                 fill(0, 0, 0, 100);
                 ellipse(mouseX, mouseY, 15, 15);
                 fill(255);
-                text((int)(Math.floor(chart.getTime())), 100, 200);
-                text((int)frameRate + "fps", 100, 250);
-                int chartBottom = height - 20;
-                double f = Chart.timeToFrames(chart.getTime() - ((float)chartBottom-e.yo)/zoom);
-                float[] s = chart.getSamples();
+                text((int)(Math.floor(time)) + "\n" + (int)(60000/chart.currentTimingPoint.mspb) + "bpm\n" + (int)frameRate + " / 120 fps\n\nz=" + zoom + "\nd=" + divisor + "\nctp-ms=" + chart.currentTimingPoint.time, e.leftLiveBorder, 200);
+                final double f = Chart.timeToFrames(time - ((float)e.chartBottom-e.yo)/zoom);
+                final float[] s = chart.getSamples();
                 //stroke(255);
                 noStroke();
                 fill(100);
-                int sampledDuration = (int)(chartBottom/zoom);
+                int sampledDuration = (int)(e.chartBottom/zoom);
                 int sampledFrames = sampledDuration*SAMPLE_RATE/1000;
                 int sampledChunkResolution = 1;
-                int sampledChunks = chartBottom/sampledChunkResolution;
+                int sampledChunks = e.chartBottom/sampledChunkResolution;
                 int sampledChunkSize = sampledFrames/sampledChunks;
                 int k = 0;
                 for(double i = f; i < Math.min(chart.getFrameLength(), f + sampledFrames); i += sampledChunkSize){
@@ -116,7 +113,7 @@ public class EditorApplication extends PApplet {
                     double sum = 0;
                     for(double j = i; j < Math.min(chart.getFrameLength(), i + sampledChunkSize); j ++) sum += Math.abs(s[(int) j]);
                     float pos = (float)sum/sampledChunkSize/32768.0f * 100 + 1;
-                    rect(e.hitObjectCenter, (chartBottom-k)*sampledChunkResolution, pos, sampledChunkResolution);
+                    rect(e.hitObjectCenter, (e.chartBottom-k)*sampledChunkResolution, pos, sampledChunkResolution);
                     k ++;
                 }
                 fill(50);
@@ -128,25 +125,72 @@ public class EditorApplication extends PApplet {
                 line(e.leftLiveBorder, e.yo, e.rightBorder, e.yo);
                 line(e.leftTimingPoint, e.yo-5, e.leftTimingPoint, e.yo+5);
 
+                chart.updateCurrentTimingPoint();
+
+                /* Drawing TimingPoints */
                 final int NoteHeight = 25; // to be changed with var when doing skinning
+                for(TimingPoint tp : chart.timingPoints){
+                    final int YPOS = (int)((time - tp.time)*zoom + e.yo);
+                    if(YPOS < 0) break;
+                    // if(YPOS > height) continue;
+                    fill(0, 100);
+                    boolean withinColumn = mouseX > e.columnBoundary[chart.cs+tp.column] && mouseX <= e.columnBoundary[chart.cs+tp.column+1];
+                    if(withinColumn){
+                        if(mouseY > YPOS-NoteHeight && mouseY < YPOS){
+                            fill(255, 100);
+                        }
+                    }
+                    if(tp instanceof UninheritedTimingPoint) stroke(255, 0, 0);
+                    else stroke(0, 255, 0);
+                    if(tp == chart.currentTimingPoint) fill(255, 0, 255, 150);
+                    rect(e.x[chart.cs+tp.column], YPOS-NoteHeight/2f, e.columnWidth-5, NoteHeight);
+
+                    fill(255);
+                    /* Drawing Divisor Lines */
+                    TimingPoint next = chart.timingPoints.higher(tp);
+                    double end = next == null ? time + e.yo / zoom : next.time;
+                    final float fl = Math.max(0f, (float) Math.floor((time - tp.time) / tp.mspb * divisor)); // first line
+                    final float ll = fl + 10000f * divisor;
+                    /* TODO: a less lazy approach instead of just saying +10000f as the ending point, while loop prolly better */
+                    for(float i = fl; i < ll; i ++){
+                        final double t = Math.floor(tp.time + tp.mspb*i/divisor);
+                        if(t >= end) break;
+                        final int YLINE = (int)((time - t)*zoom + e.yo);
+                        if(YLINE < 0) break;
+                        if(YLINE < height) {
+                            stroke(200);
+                            line(e.leftBorder, YLINE, e.rightTimingPoint, YLINE);
+                            text(i, e.rightTimingPoint, YLINE);
+                        }
+                    }
+                }
+
+                /* Drawing notes */
+                stroke(255);
                 for(Note n : chart.notes){
-                    final int YPOS = (int)((chart.getTime() - n.time)*zoom + e.yo);
+                    final int YPOS = (int)((time - n.time)*zoom + e.yo);
                     if(YPOS < 0) break;
                     fill(0, 100);
-                    if(mouseX > e.columnBoundary[n.column] && mouseX <= e.columnBoundary[n.column+1]){
+                    boolean withinColumn = mouseX > e.columnBoundary[n.column] && mouseX <= e.columnBoundary[n.column+1];
+                    if(withinColumn){
                         if(mouseY > YPOS-NoteHeight && mouseY < YPOS){
                             fill(255, 100);
                         }
                     }
                     if(n instanceof LongNote){
-                        final int YEND = (int)((chart.getTime() - ((LongNote) n).endTime)*zoom + e.yo);
-                        if(mouseX > e.columnBoundary[n.column] && mouseX <= e.columnBoundary[n.column+1]){
+                        final int YEND = (int)((time - ((LongNote) n).endTime)*zoom + e.yo);
+                        if(withinColumn){
                             if(mouseY > YEND-NoteHeight && mouseY < YPOS){
                                 fill(255, 100);
                             }
                         }
                         rect(e.x[n.column], (YPOS+YEND)/2f - NoteHeight/2f, e.columnWidth-15, YPOS-YEND-NoteHeight);
                         if(YEND > height) continue;
+                        if(withinColumn){
+                            if(mouseY > YEND-NoteHeight && mouseY < YEND){
+                                fill(255, 100, 100, 100);
+                            }
+                        }
                         rect(e.x[n.column], YEND-NoteHeight/2f, e.columnWidth-5, NoteHeight);
                     }else if(YPOS > height) continue;
                     rect(e.x[n.column], YPOS-NoteHeight/2f, e.columnWidth-5, NoteHeight);
@@ -194,11 +238,21 @@ public class EditorApplication extends PApplet {
 
     public void keyPressed() {
         keys.add(keyCode);
-        if(keyCode == 32 && chart.getAudioPlayer().getStatus() == MediaPlayer.Status.PLAYING){
-            chart.getAudioPlayer().pause();
-            chart.getAudioPlayer().seek(chart.getAudioPlayer().getCurrentTime());
+        switch(keyCode){
+            case 32: // space bar [ ]
+                if(chart.getAudioPlayer().getStatus() == MediaPlayer.Status.PLAYING){
+                    chart.getAudioPlayer().pause();
+                    chart.getAudioPlayer().seek(chart.getAudioPlayer().getCurrentTime());
+                }
+                else chart.getAudioPlayer().play();
+            break;
+            case 45: // plus key [+]
+                zoom -= 0.0625f;
+            break;
+            case 61: // minus key [-]
+                zoom += 0.0625f;
+            break;
         }
-        else chart.getAudioPlayer().play();
     }
 
     public void keyReleased() {

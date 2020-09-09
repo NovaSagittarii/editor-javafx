@@ -9,17 +9,16 @@ import processing.core.PImage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class Chart {
     public static final int GENERAL = 1, EDITOR = 2, METADATA = 3, DIFFICULTY = 4, EVENTS = 5, TIMING_POINTS = 6, HIT_OBJECTS = 7;
     public HashMap<String, String> metadata = new HashMap<>(); // String title, titleUnicode, artist, artistUnicode, creator, version, source, tags, bID, sID;
     public ArrayList<Note> notes = new ArrayList<>();
-    public ArrayList<TimingPoint> timingPoints = new ArrayList<>();
-    public float hp, cs, od, ar;
+    public TreeSet<TimingPoint> timingPoints = new TreeSet<>();
+    public TimingPoint currentTimingPoint;
+    public float hp, od, ar; // HP - OverallDifficulty - ApproachRate
+    public int cs; // CircleSize | KeyCount
     private PImage bg, bgRaw;
     private Audio audio;
     private final String path;
@@ -36,7 +35,7 @@ public class Chart {
         try {
             List<String> contents = FileUtil.readLines(f); // Iterate the result to print each line of the file.
             for (String line : contents) {
-                System.out.println(state + " | " + line);
+                // System.out.println(state + " | " + line);
                 switch(line){
                     case "[General]": state = GENERAL; break;
                     case "[Editor]": state = EDITOR; break;
@@ -60,8 +59,8 @@ public class Chart {
                             case DIFFICULTY:
                                 if (line.startsWith("H")) hp = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
                                 if (line.startsWith("C")){
-                                    cs = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
-                                    ColumnWidth = 512/(int)cs;
+                                    cs = Integer.parseInt(line.replaceFirst("[^:]+?:", ""));
+                                    ColumnWidth = 512/cs;
                                 }
                                 if (line.startsWith("O")) od = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
                                 if (line.startsWith("A")) ar = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
@@ -75,19 +74,21 @@ public class Chart {
                                 break;
                             case TIMING_POINTS:
                                 TimingPoint timingPoint = TimingPoint.fromString(line);
-                                if (timingPoint != null) timingPoints.add(timingPoint);
+                                if (timingPoint != null){
+                                    timingPoints.add(timingPoint);
+                                }
                                 break;
                             case HIT_OBJECTS:
                                 Note note = Note.fromString(line, ColumnWidth);
-                                System.out.println(note);
                                 if (note != null) notes.add(note);
                                 break;
                         }
                 }
-
-                Collections.sort(this.notes);
-                timingPoints.sort(TimingPoint.compareByTime());
             }
+            Collections.sort(this.notes);
+            alignTimingPoints();
+            currentTimingPoint = timingPoints.first();
+            updateCurrentTimingPoint();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -112,11 +113,27 @@ public class Chart {
         bg = g.get();
     }
     public void alignTimingPoints(){
-        timingPoints.sort(TimingPoint.compareByTime());
+        if(timingPoints.size() < 2) return;
         UninheritedTimingPoint red = null;
         for(TimingPoint tp : timingPoints){
             if(tp instanceof UninheritedTimingPoint) red = (UninheritedTimingPoint) tp;
-            else if(red != null) ((InheritedTimingPoint) tp).parent = red;
+            else if(red != null){
+                tp.mspb = red.mspb;
+                ((InheritedTimingPoint) tp).parent = red;
+            }
+        }
+    }
+    public void updateCurrentTimingPoint(){
+        double now = getTime();
+        TimingPoint next = timingPoints.higher(currentTimingPoint);
+        while(next != null && next.time <= now){
+            currentTimingPoint = next;
+            next = timingPoints.higher(currentTimingPoint);
+        }
+        TimingPoint before = timingPoints.lower(currentTimingPoint);
+        while(before != null && currentTimingPoint.time > now){
+            currentTimingPoint = before;
+            before = timingPoints.lower(currentTimingPoint);
         }
     }
     static public double timeToFrames(double millis){ return millis * ((double)Audio.SAMPLE_RATE/1000.0); }

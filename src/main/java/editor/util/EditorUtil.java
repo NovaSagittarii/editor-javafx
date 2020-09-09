@@ -2,7 +2,8 @@ package editor.util;
 
 public class EditorUtil {
     public int[] x, columnBoundary;
-    public int leftBorder, rightBorder, yo, kc, leftTimingPoint, rightTimingPoint, leftLiveBorder, columnWidth, halfColumnWidth, hitObjectCenter;
+    public int leftBorder, rightBorder, kc, leftTimingPoint, rightTimingPoint, leftLiveBorder, columnWidth, halfColumnWidth, hitObjectCenter;
+    public int chartBottom, yo;
     public int w, h, sampledDuration;
     public EditorUtil(int cs, int w_, int h_){
         calibrate(cs, w_, h_);
@@ -13,6 +14,7 @@ public class EditorUtil {
         w = w_;
         h = h_;
         yo = Math.max(h / 5, h - 150);
+        chartBottom = h - 20;
         leftBorder = 50;
         rightBorder = w - 50;
         columnWidth = (rightBorder - leftBorder - 200) / (cs * 2 + 3);
