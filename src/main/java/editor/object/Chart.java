@@ -32,10 +32,11 @@ public class Chart {
         int state = 0;
         path = f.getParentFile().getAbsolutePath();
         s.getSurface().setTitle("EditorApplication | editing " + f.getName());
+        int ColumnWidth = 128; // 512 / 4
         try {
             List<String> contents = FileUtil.readLines(f); // Iterate the result to print each line of the file.
             for (String line : contents) {
-                // System.out.println(line);
+                System.out.println(state + " | " + line);
                 switch(line){
                     case "[General]": state = GENERAL; break;
                     case "[Editor]": state = EDITOR; break;
@@ -58,7 +59,10 @@ public class Chart {
                                 break;
                             case DIFFICULTY:
                                 if (line.startsWith("H")) hp = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
-                                if (line.startsWith("C")) cs = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
+                                if (line.startsWith("C")){
+                                    cs = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
+                                    ColumnWidth = 512/(int)cs;
+                                }
                                 if (line.startsWith("O")) od = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
                                 if (line.startsWith("A")) ar = Float.parseFloat(line.replaceFirst("[^:]+?:", ""));
                                 break;
@@ -74,7 +78,8 @@ public class Chart {
                                 if (timingPoint != null) timingPoints.add(timingPoint);
                                 break;
                             case HIT_OBJECTS:
-                                Note note = Note.fromString(line);
+                                Note note = Note.fromString(line, ColumnWidth);
+                                System.out.println(note);
                                 if (note != null) notes.add(note);
                                 break;
                         }
@@ -114,7 +119,9 @@ public class Chart {
             else if(red != null) ((InheritedTimingPoint) tp).parent = red;
         }
     }
+    static public double timeToFrames(double millis){ return millis * ((double)Audio.SAMPLE_RATE/1000.0); }
     public double getTime(){ return getAudioPlayer().getCurrentTime().toMillis(); } // returns in MS
+    public float progressRatio(){ return (float)(getTime() / getAudioPlayer().getTotalDuration().toMillis()); }
     public int getFramePosition(){ return (int)(getAudioPlayer().getCurrentTime().toMillis() * ((double)Audio.SAMPLE_RATE/1000.0)); }
     public int getFrameLength(){ return audio.getSamples().length; }
     public Audio getAudio(){ return audio; }

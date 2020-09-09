@@ -1,7 +1,6 @@
 package editor.object;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 public class Note implements Comparable<Note> {
     public int column, time, hitsounds, type = 1;
@@ -14,13 +13,15 @@ public class Note implements Comparable<Note> {
         extras = sfx;
     }
 
-    public static Note fromString(String line) {
+    public static Note fromString(String line, int ColumnWidth) {
         String[] l = line.split(",");
         int[] s = Arrays.stream(Arrays.copyOfRange(l, 0, l.length - 1)).mapToInt(Integer::parseInt).toArray();
-        if (s.length < 7) return null;
+        if (s.length < 4) return null;
         // x, y, t, type, hs, _t, sfx
-        if (s[3] > 100) return new LongNote(s[0], s[2], s[4], s[5], l[6]);
-        else return new Note(s[0], s[2], s[4], l[5]);
+        if (s[3] > 100){
+            return new LongNote(s[0] / ColumnWidth, s[2], s[4], Integer.parseInt(l[5].split(":")[0]), l[5].replaceFirst("\\d?:", ""));
+        }
+        else return new Note(s[0] / ColumnWidth, s[2], s[4], l[5]);
     }
 
     public String export() {
