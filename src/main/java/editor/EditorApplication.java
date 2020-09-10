@@ -6,6 +6,8 @@ import editor.util.EditorUtil;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 import processing.core.PApplet;
+import processing.event.Event;
+import processing.event.MouseEvent;
 
 import java.io.File;
 import java.util.TreeSet;
@@ -32,13 +34,14 @@ import java.util.TreeSet;
 
 public class EditorApplication extends PApplet {
     static final int SAMPLE_RATE = 44100;
-    private final int AWAIT = 0, SELECT = 1, COMPOSE = 2;
+    static final int AWAIT = 0, SELECT = 1, COMPOSE = 2;
     private DirectoryParser dp;
     private Chart chart;
     private EditorUtil e;
-    private final TreeSet<Integer> keys = new TreeSet<>();
+    private final boolean[] keys = new boolean[500]; // some arbitrary number (500 is probably enough for all keyCode events)
     private int state = AWAIT, divisor = 1;
     private float zoom = 0.75f;
+    private double time, mouseTime;
     private boolean mp;
 
     public void settings(){
@@ -84,19 +87,19 @@ public class EditorApplication extends PApplet {
                             System.out.println(chart.export());
                             // System.out.println(Arrays.toString(chart.getSamples()));
                             state = COMPOSE;
-                            textAlign(CENTER, CENTER);
                         }
                     }
                     text(s, 25, 15+20*y);
                 }
             break;
             case COMPOSE:
-                final double time = chart.getTime();
+                time = chart.getTime();
+                mouseTime = time + (e.yo - mouseY)/zoom;
                 background(chart.getBackground());
                 fill(0, 0, 0, 100);
                 ellipse(mouseX, mouseY, 15, 15);
                 fill(255);
-                text((int)(Math.floor(time)) + "\n" + (int)(60000/chart.currentTimingPoint.mspb) + "bpm\n" + (int)frameRate + " / 120 fps\n\nz=" + zoom + "\nd=" + divisor + "\nctp-ms=" + chart.currentTimingPoint.time, e.leftLiveBorder, 200);
+                text((int)(Math.floor(time)) + "\n" + (int)(60000/chart.currentTimingPoint.mspb) + "bpm\n" + (int)frameRate + " / 120 fps\n\nz=" + zoom + "\nd=" + divisor + "\nctp-ms=" + chart.currentTimingPoint.time + "\nkeyCode=" + keyCode, e.leftLiveBorder, 200);
                 final double f = Chart.timeToFrames(time - ((float)e.chartBottom-e.yo)/zoom);
                 final float[] s = chart.getSamples();
                 //stroke(255);
@@ -236,8 +239,26 @@ public class EditorApplication extends PApplet {
         // if(chart != null) chart.getAudio().getClip().stop();
     }
 
+    public void mouseWheel(MouseEvent e){
+        if(keys[CONTROL]) { // control [CTRL] for divisor modification | [alt for small changes]
+            if(e.getCount() > 0){ // /= 2
+                divisor = Math.max(1, keys[ALT] ? divisor-1 : (divisor%2==0 ? divisor/2 : divisor));
+            } else { // *= 2
+                divisor = Math.min(64, keys[ALT] ? divisor+1 : divisor*2);
+            }
+        }else { // scrolling | [alt for small changes]
+            final double mspb = keys[ALT] ? 1 : chart.currentTimingPoint.mspb / (keys[SHIFT] ? 1 : divisor); // shift for 1/1 divisor snapping
+            if (e.getCount() > 0) { // advance (shift forward a bit, add & round)
+                seek(new Duration(Math.round((time - chart.currentTimingPoint.time+0.25) / mspb + 0.5) * mspb + chart.currentTimingPoint.time));
+            } else { // go back (shift back a bit, subtract & round)
+                seek(new Duration(Math.round((time - chart.currentTimingPoint.time-0.25) / mspb - 0.5) * mspb + chart.currentTimingPoint.time));
+            }
+        }
+    }
+
     public void keyPressed() {
-        keys.add(keyCode);
+        if(keys[keyCode]) return; // should only run once when it is pressed.
+        keys[keyCode] = true;
         switch(keyCode){
             case 32: // space bar [ ]
                 if(chart.getAudioPlayer().getStatus() == MediaPlayer.Status.PLAYING){
@@ -248,15 +269,17 @@ public class EditorApplication extends PApplet {
             break;
             case 45: // plus key [+]
                 zoom -= 0.0625f;
+                if(zoom < 0.0625f) zoom = 0.0625f;
             break;
             case 61: // minus key [-]
                 zoom += 0.0625f;
             break;
         }
+        keyCode = 0; // interrupt ALT popup
     }
 
     public void keyReleased() {
-        keys.remove(keyCode);
+        keys[keyCode] = false;
     }
 
     public static void main(String[] args){
