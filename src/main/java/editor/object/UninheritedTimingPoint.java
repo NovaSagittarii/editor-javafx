@@ -14,5 +14,6 @@ public class UninheritedTimingPoint extends TimingPoint {
         super(t, meter, sampleSet, sampleIndex, volume, kiai);
         mspb = _mspb;
         bpm = 60000 / mspb;
+        column = 0;
     }
 }

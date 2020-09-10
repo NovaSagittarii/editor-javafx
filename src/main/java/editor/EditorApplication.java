@@ -6,11 +6,9 @@ import editor.util.EditorUtil;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 import processing.core.PApplet;
-import processing.event.Event;
 import processing.event.MouseEvent;
 
 import java.io.File;
-import java.util.TreeSet;
 
 /* public class EditorApplication extends Application {
     public static PSurfaceFX surface;
@@ -96,8 +94,6 @@ public class EditorApplication extends PApplet {
                 time = chart.getTime();
                 mouseTime = time + (e.yo - mouseY)/zoom;
                 background(chart.getBackground());
-                fill(0, 0, 0, 100);
-                ellipse(mouseX, mouseY, 15, 15);
                 fill(255);
                 text((int)(Math.floor(time)) + "\n" + (int)(60000/chart.currentTimingPoint.mspb) + "bpm\n" + (int)frameRate + " / 120 fps\n\nz=" + zoom + "\nd=" + divisor + "\nctp-ms=" + chart.currentTimingPoint.time + "\nkeyCode=" + keyCode, e.leftLiveBorder, 200);
                 final double f = Chart.timeToFrames(time - ((float)e.chartBottom-e.yo)/zoom);
@@ -121,12 +117,17 @@ public class EditorApplication extends PApplet {
                 }
                 fill(50);
                 rect(e.hitObjectCenter, (float)height/2, 1, height);
-                ellipse(mouseX, mouseY, mousePressed ? 15 : 10, 10);
                 stroke(255);
                 line(300, 200, (float) (300+100*Math.cos((double)frameCount/50)), (float) (200+100*Math.sin((double)frameCount/50)));
                 line(e.leftBorder, e.yo, e.rightTimingPoint, e.yo);
                 line(e.leftLiveBorder, e.yo, e.rightBorder, e.yo);
                 line(e.leftTimingPoint, e.yo-5, e.leftTimingPoint, e.yo+5);
+
+                if(mouseX > e.leftBorder && mouseX < e.leftTimingPoint){
+                    line(e.leftBorder, mouseY, e.leftTimingPoint, mouseY);
+                    fill(200);
+                    text((int)mouseTime, mouseX, mouseY);
+                }
 
                 chart.updateCurrentTimingPoint();
 
@@ -169,7 +170,7 @@ public class EditorApplication extends PApplet {
                 }
 
                 /* Drawing notes */
-                stroke(255);
+                stroke(255); /* TODO: Dragging/modifiying notes & note selection & note placement */
                 for(Note n : chart.notes){
                     final int YPOS = (int)((time - n.time)*zoom + e.yo);
                     if(YPOS < 0) break;
@@ -257,6 +258,10 @@ public class EditorApplication extends PApplet {
     }
 
     public void keyPressed() {
+        if(keyCode >= keys.length){
+            System.out.println(key + "|" + keyCode);
+            return;
+        }
         if(keys[keyCode]) return; // should only run once when it is pressed.
         keys[keyCode] = true;
         switch(keyCode){
@@ -279,6 +284,7 @@ public class EditorApplication extends PApplet {
     }
 
     public void keyReleased() {
+        if(keyCode > keys.length) return;
         keys[keyCode] = false;
     }
 

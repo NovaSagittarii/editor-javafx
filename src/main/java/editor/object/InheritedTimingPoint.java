@@ -12,5 +12,6 @@ public class InheritedTimingPoint extends TimingPoint {
     public InheritedTimingPoint(double t, double _sv, int meter, int sampleSet, int sampleIndex, int volume, int kiai) {
         super(t, meter, sampleSet, sampleIndex, volume, kiai);
         sv = _sv;
+        column = 1;
     }
 }
