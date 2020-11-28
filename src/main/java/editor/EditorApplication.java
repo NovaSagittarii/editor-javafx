@@ -32,15 +32,18 @@ import java.io.File;
 
 public class EditorApplication extends PApplet {
     static final int SAMPLE_RATE = 44100;
-    static final int AWAIT = 0, SELECT = 1, COMPOSE = 2;
+    static final int AWAIT = -1, SELECT = 0, COMPOSE = 1;
+    static final int NOTE = 1, LNOTE = 2;
     private DirectoryParser dp;
     private Chart chart;
     private EditorUtil e;
     private final boolean[] keys = new boolean[500]; // some arbitrary number (500 is probably enough for all keyCode events)
-    private int state = AWAIT, divisor = 1;
+    private int state = AWAIT, mode = NOTE, divisor = 1;
     private float zoom = 0.75f;
     private double time, mouseTime;
-    private boolean mp;
+    private int mp;
+
+    private Note removalCache = null; // cuz apparently concurrentModification is a bad thing
 
     public void settings(){
         noSmooth();
@@ -79,7 +82,7 @@ public class EditorApplication extends PApplet {
                     if(mouseY < 15+20*y && mouseY > 5+20*y){
                         rect(10, 10+20*y, 10, 10);
                         fill(20);
-                        if(mp){
+                        if(mp != 0){
                             chart = new Chart(this, new File(dp.getCharts().get(s)));
                             e.calibrate(chart.cs, width, height);
                             System.out.println(chart.export());
@@ -123,10 +126,26 @@ public class EditorApplication extends PApplet {
                 line(e.leftLiveBorder, e.yo, e.rightBorder, e.yo);
                 line(e.leftTimingPoint, e.yo-5, e.leftTimingPoint, e.yo+5);
 
-                if(mouseX > e.leftBorder && mouseX < e.leftTimingPoint){
-                    line(e.leftBorder, mouseY, e.leftTimingPoint, mouseY);
+                if(mouseX > e.leftBorder && mouseX < e.rightBorder){
+                    if(mouseX < e.leftTimingPoint) line(e.leftBorder, mouseY, e.leftTimingPoint, mouseY);
+                    else line(e.leftTimingPoint, mouseY, e.rightTimingPoint, mouseY);
                     fill(200);
-                    text((int)mouseTime, mouseX, mouseY);
+                    text((int) mouseTime, mouseX, mouseY);
+
+                    /* TODO: LN/TP Placement & collision check */
+                    if(mouseY < height-20){
+                        switch(mode){
+                            case NOTE:
+                                if(mp == LEFT){
+                                    TimingPoint tp = chart.currentTimingPoint;
+                                    chart.addNote(new Note((mouseX - e.leftBorder)/e.columnWidth, (int) (keys[SHIFT] ? mouseTime : tp.time + Math.floor((mouseTime - tp.time) / tp.mspb*divisor) * (tp.mspb/divisor))));
+                                }
+                                break;
+                            case LNOTE:
+
+                                break;
+                        }
+                    }
                 }
 
                 chart.updateCurrentTimingPoint();
@@ -170,7 +189,7 @@ public class EditorApplication extends PApplet {
                 }
 
                 /* Drawing notes */
-                stroke(255); /* TODO: Dragging/modifiying notes & note selection & note placement */
+                stroke(255); /* TODO: Dragging/modifying notes & note selection & note placement */
                 for(Note n : chart.notes){
                     final int YPOS = (int)((time - n.time)*zoom + e.yo);
                     if(YPOS < 0) break;
@@ -179,6 +198,14 @@ public class EditorApplication extends PApplet {
                     if(withinColumn){
                         if(mouseY > YPOS-NoteHeight && mouseY < YPOS){
                             fill(255, 100);
+                            if(mp == LEFT){
+                                chart.select(n);
+                                mp = 0;
+                            }else if(mp == RIGHT){
+                                removalCache = n;
+                                mp = 0;
+                                continue;
+                            }
                         }
                     }
                     if(n instanceof LongNote){
@@ -199,6 +226,10 @@ public class EditorApplication extends PApplet {
                     }else if(YPOS > height) continue;
                     rect(e.x[n.column], YPOS-NoteHeight/2f, e.columnWidth-5, NoteHeight);
                 }
+                if(removalCache != null){
+                    chart.removeNote(removalCache);
+                    removalCache = null;
+                }
 
                 noStroke();
                 fill(255, 80);
@@ -208,7 +239,7 @@ public class EditorApplication extends PApplet {
                 line(chart.progressRatio() * width, height-20, chart.progressRatio() * width, height);
                 break;
         }
-        mp = false;
+        mp = 0;
     }
 
     public void mousePressed() {
@@ -216,7 +247,7 @@ public class EditorApplication extends PApplet {
         if(chart != null){
             if(mouseY > height-20) seek(mouseXDuration());
         }
-        mp = true;
+        mp = mouseButton;
     }
 
     public void mouseDragged(){

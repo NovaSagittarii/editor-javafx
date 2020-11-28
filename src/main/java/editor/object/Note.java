@@ -6,11 +6,18 @@ public class Note implements Comparable<Note> {
     public int column, time, hitsounds, type = 1;
     public String extras;
 
+    public Note(int x, int t){
+        column = x;
+        time = t;
+        hitsounds = 0;
+        extras = null;
+    }
+
     public Note(int x, int t, int hs, String sfx) {
         column = x;
         time = t;
         hitsounds = hs;
-        extras = sfx;
+        extras = sfx; /* TODO: likely to use split/join (':') for extras part */
     }
 
     public static Note fromString(String line, int ColumnWidth) {

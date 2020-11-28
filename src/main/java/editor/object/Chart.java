@@ -16,6 +16,7 @@ public class Chart {
     public HashMap<String, String> metadata = new HashMap<>(); // String title, titleUnicode, artist, artistUnicode, creator, version, source, tags, bID, sID;
     public ArrayList<Note> notes = new ArrayList<>();
     public TreeSet<TimingPoint> timingPoints = new TreeSet<>();
+    public TreeSet<Note> noteSelection = new TreeSet<>();
     public TimingPoint currentTimingPoint;
     public float hp, od, ar; // HP - OverallDifficulty - ApproachRate
     public int cs; // CircleSize | KeyCount
@@ -135,6 +136,18 @@ public class Chart {
             currentTimingPoint = before;
             before = timingPoints.lower(currentTimingPoint);
         }
+    }
+    public boolean select(Note n){
+        return noteSelection.add(n);
+    }
+    /* TODO: public void selectArea(int x1, int x2, int start, int end){} */
+    public void addNote(Note n){
+        notes.add(n);
+        Collections.sort(notes);
+    }
+    public boolean removeNote(Note n){ return notes.remove(n); }
+    public boolean deselect(Note n){
+        return noteSelection.remove(n);
     }
     static public double timeToFrames(double millis){ return millis * ((double)Audio.SAMPLE_RATE/1000.0); }
     public double getTime(){ return getAudioPlayer().getCurrentTime().toMillis(); } // returns in MS
