@@ -40,7 +40,7 @@ public class EditorApplication extends PApplet {
     private final boolean[] keys = new boolean[500]; // some arbitrary number (500 is probably enough for all keyCode events)
     private int state = AWAIT, mode = NOTE, divisor = 1;
     private float zoom = 0.75f;
-    private double time, mouseTime;
+    private double time, mouseTime, mpTime;
     private int mp;
 
     private Note removalCache = null; // cuz apparently concurrentModification is a bad thing
@@ -98,7 +98,7 @@ public class EditorApplication extends PApplet {
                 mouseTime = time + (e.yo - mouseY)/zoom;
                 background(chart.getBackground());
                 fill(255);
-                text((int)(Math.floor(time)) + "\n" + (int)(60000/chart.currentTimingPoint.mspb) + "bpm\n" + (int)frameRate + " / 120 fps\n\nz=" + zoom + "\nd=" + divisor + "\nctp-ms=" + chart.currentTimingPoint.time + "\nkeyCode=" + keyCode, e.leftLiveBorder, 200);
+                text((int)(Math.floor(time)) + "\n" + (int)(60000/chart.activeTimingPoints.current.mspb) + "bpm\n" + (int)frameRate + " / 120 fps\n\nz=" + zoom + "\nd=" + divisor + "\nctp-ms=" + chart.timingPoints.current.time + "\nkeyCode=" + keyCode, e.leftLiveBorder, 200);
                 final double f = Chart.timeToFrames(time - ((float)e.chartBottom-e.yo)/zoom);
                 final float[] s = chart.getSamples();
                 //stroke(255);
@@ -137,8 +137,12 @@ public class EditorApplication extends PApplet {
                         switch(mode){
                             case NOTE:
                                 if(mp == LEFT){
-                                    TimingPoint tp = chart.currentTimingPoint;
-                                    chart.addNote(new Note((mouseX - e.leftBorder)/e.columnWidth, (int) (keys[SHIFT] ? mouseTime : tp.time + Math.floor((mouseTime - tp.time) / tp.mspb*divisor) * (tp.mspb/divisor))));
+                                    if(mouseX < e.leftTimingPoint) {
+                                        TimingPoint tp = chart.activeTimingPoints.current;
+                                        chart.addNote(new Note((mouseX - e.leftBorder) / e.columnWidth, (int) (keys[SHIFT] ? mouseTime : tp.time + Math.round((mouseTime - tp.time) / tp.mspb * divisor) * (tp.mspb / divisor))));
+                                    }else{
+                                        /* TODO: TP Placement */
+                                    }
                                 }
                                 break;
                             case LNOTE:
@@ -165,12 +169,13 @@ public class EditorApplication extends PApplet {
                     }
                     if(tp instanceof UninheritedTimingPoint) stroke(255, 0, 0);
                     else stroke(0, 255, 0);
-                    if(tp == chart.currentTimingPoint) fill(255, 0, 255, 150);
+                    if(tp == chart.timingPoints.current) fill(255, 0, 255, 150);
                     rect(e.x[chart.cs+tp.column], YPOS-NoteHeight/2f, e.columnWidth-5, NoteHeight);
-
+                }
+                /* Drawing Divisor Lines */
+                for(TimingPoint tp : chart.activeTimingPoints){
                     fill(255);
-                    /* Drawing Divisor Lines */
-                    TimingPoint next = chart.timingPoints.higher(tp);
+                    TimingPoint next = chart.activeTimingPoints.higher(tp);
                     double end = next == null ? time + e.yo / zoom : next.time;
                     final float fl = Math.max(0f, (float) Math.floor((time - tp.time) / tp.mspb * divisor)); // first line
                     final float ll = fl + 10000f * divisor;
@@ -189,17 +194,24 @@ public class EditorApplication extends PApplet {
                 }
 
                 /* Drawing notes */
-                stroke(255); /* TODO: Dragging/modifying notes & note selection & note placement */
+                /* TODO: Dragging/modifying notes & note selection & note placement */
                 for(Note n : chart.notes){
                     final int YPOS = (int)((time - n.time)*zoom + e.yo);
                     if(YPOS < 0) break;
+                    stroke(255);
                     fill(0, 100);
+                    if(chart.hasSelected(n)) stroke(255, 255, 0);
                     boolean withinColumn = mouseX > e.columnBoundary[n.column] && mouseX <= e.columnBoundary[n.column+1];
                     if(withinColumn){
                         if(mouseY > YPOS-NoteHeight && mouseY < YPOS){
                             fill(255, 100);
-                            if(mp == LEFT){
-                                chart.select(n);
+                            if(mp == LEFT && mode == SELECT){
+                                if(chart.hasSelected(n)){
+                                    chart.deselect(n);
+                                }else{
+                                    if(!keys[CONTROL]) chart.deselectAll();
+                                    chart.select(n); /* TODO: Note focus for hitsounding */
+                                }
                                 mp = 0;
                             }else if(mp == RIGHT){
                                 removalCache = n;
@@ -230,6 +242,7 @@ public class EditorApplication extends PApplet {
                     chart.removeNote(removalCache);
                     removalCache = null;
                 }
+                if(mp == LEFT && !keys[CONTROL] && mouseX > e.leftBorder && mouseX < e.rightBorder) chart.deselectAll();
 
                 noStroke();
                 fill(255, 80);
@@ -279,11 +292,12 @@ public class EditorApplication extends PApplet {
                 divisor = Math.min(64, keys[ALT] ? divisor+1 : divisor*2);
             }
         }else { // scrolling | [alt for small changes]
-            final double mspb = keys[ALT] ? 1 : chart.currentTimingPoint.mspb / (keys[SHIFT] ? 1 : divisor); // shift for 1/1 divisor snapping
+            final TimingPoint tp = chart.activeTimingPoints.current;
+            final double mspb = keys[ALT] ? 1 : tp.mspb / (keys[SHIFT] ? 1 : divisor); // shift for 1/1 divisor snapping
             if (e.getCount() > 0) { // advance (shift forward a bit, add & round)
-                seek(new Duration(Math.round((time - chart.currentTimingPoint.time+0.25) / mspb + 0.5) * mspb + chart.currentTimingPoint.time));
+                seek(new Duration(Math.round((time - tp.time+0.25) / mspb + 0.5) * mspb + tp.time));
             } else { // go back (shift back a bit, subtract & round)
-                seek(new Duration(Math.round((time - chart.currentTimingPoint.time-0.25) / mspb - 0.5) * mspb + chart.currentTimingPoint.time));
+                seek(new Duration(Math.round((time - tp.time-0.25) / mspb - 0.5) * mspb + tp.time));
             }
         }
     }
@@ -297,19 +311,29 @@ public class EditorApplication extends PApplet {
         keys[keyCode] = true;
         switch(keyCode){
             case 32: // space bar [ ]
-                if(chart.getAudioPlayer().getStatus() == MediaPlayer.Status.PLAYING){
-                    chart.getAudioPlayer().pause();
-                    chart.getAudioPlayer().seek(chart.getAudioPlayer().getCurrentTime());
+                MediaPlayer ap = chart.getAudioPlayer();
+                if(ap.getStatus() == MediaPlayer.Status.PLAYING){
+                    ap.pause();
+                    ap.seek(ap.getCurrentTime());
                 }
-                else chart.getAudioPlayer().play();
-            break;
+                else ap.play();
+                break;
             case 45: // plus key [+]
                 zoom -= 0.0625f;
                 if(zoom < 0.0625f) zoom = 0.0625f;
-            break;
+                break;
             case 61: // minus key [-]
                 zoom += 0.0625f;
-            break;
+                break;
+            case 112: // F1
+                mode = SELECT;
+                break;
+            case 113: // F2
+                mode = NOTE;
+                break;
+            case 114: // F3
+                mode = LNOTE;
+                break;
         }
         keyCode = 0; // interrupt ALT popup
     }

@@ -5,6 +5,7 @@ import java.util.Arrays;
 public class Note implements Comparable<Note> {
     public int column, time, hitsounds, type = 1;
     public String extras;
+    public Integer selected = null;
 
     public Note(int x, int t){
         column = x;

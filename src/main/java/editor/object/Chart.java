@@ -15,17 +15,19 @@ public class Chart {
     public static final int GENERAL = 1, EDITOR = 2, METADATA = 3, DIFFICULTY = 4, EVENTS = 5, TIMING_POINTS = 6, HIT_OBJECTS = 7;
     public HashMap<String, String> metadata = new HashMap<>(); // String title, titleUnicode, artist, artistUnicode, creator, version, source, tags, bID, sID;
     public ArrayList<Note> notes = new ArrayList<>();
-    public TreeSet<TimingPoint> timingPoints = new TreeSet<>();
+    public TimingPointTimeline timingPoints = new TimingPointTimeline();
+    public TimingPointTimeline activeTimingPoints = new TimingPointTimeline();
     public TreeSet<Note> noteSelection = new TreeSet<>();
-    public TimingPoint currentTimingPoint;
     public float hp, od, ar; // HP - OverallDifficulty - ApproachRate
     public int cs; // CircleSize | KeyCount
+    public int selectionId;
     private PImage bg, bgRaw;
     private Audio audio;
     private final String path;
     private String audioPath;
     private String bgPath;
     private final PApplet s;
+    /* TODO: make image cache of the waveform and redraw as necessary */
 
     public Chart(PApplet sketch, File f) {
         s = sketch;
@@ -76,7 +78,7 @@ public class Chart {
                             case TIMING_POINTS:
                                 TimingPoint timingPoint = TimingPoint.fromString(line);
                                 if (timingPoint != null){
-                                    timingPoints.add(timingPoint);
+                                    addTimingPoint(timingPoint);
                                 }
                                 break;
                             case HIT_OBJECTS:
@@ -88,7 +90,6 @@ public class Chart {
             }
             Collections.sort(this.notes);
             alignTimingPoints();
-            currentTimingPoint = timingPoints.first();
             updateCurrentTimingPoint();
         } catch (IOException e) {
             e.printStackTrace();
@@ -126,18 +127,11 @@ public class Chart {
     }
     public void updateCurrentTimingPoint(){
         double now = getTime();
-        TimingPoint next = timingPoints.higher(currentTimingPoint);
-        while(next != null && next.time <= now){
-            currentTimingPoint = next;
-            next = timingPoints.higher(currentTimingPoint);
-        }
-        TimingPoint before = timingPoints.lower(currentTimingPoint);
-        while(before != null && currentTimingPoint.time > now){
-            currentTimingPoint = before;
-            before = timingPoints.lower(currentTimingPoint);
-        }
+        timingPoints.update(now);
+        activeTimingPoints.update(now);
     }
     public boolean select(Note n){
+        n.selected = selectionId;
         return noteSelection.add(n);
     }
     /* TODO: public void selectArea(int x1, int x2, int start, int end){} */
@@ -147,8 +141,20 @@ public class Chart {
     }
     public boolean removeNote(Note n){ return notes.remove(n); }
     public boolean deselect(Note n){
+        n.selected = null;
         return noteSelection.remove(n);
     }
+    public void deselectAll(){
+        selectionId ++;
+        noteSelection.clear();
+    }
+    public boolean hasSelected(Note n){ return n.selected != null && n.selected == selectionId; }
+
+    public void addTimingPoint(TimingPoint tp){
+        if(tp instanceof UninheritedTimingPoint) activeTimingPoints.add(tp);
+        timingPoints.add(tp);
+    }
+
     static public double timeToFrames(double millis){ return millis * ((double)Audio.SAMPLE_RATE/1000.0); }
     public double getTime(){ return getAudioPlayer().getCurrentTime().toMillis(); } // returns in MS
     public float progressRatio(){ return (float)(getTime() / getAudioPlayer().getTotalDuration().toMillis()); }
