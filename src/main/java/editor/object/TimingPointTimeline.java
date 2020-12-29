@@ -9,18 +9,18 @@ public class TimingPointTimeline extends TreeSet<TimingPoint> {
     }
     public void update(double time){
         if(current == null){
-            if(this.isEmpty()) throw new UnsupportedOperationException("add something first pls");
-            current = this.first();
+            if(isEmpty()) throw new UnsupportedOperationException("add something first pls");
+            current = first();
         }
-        TimingPoint next = this.higher(current);
+        TimingPoint next = higher(current);
         while(next != null && next.time <= time){
             current = next;
-            next = this.higher(current);
+            next = higher(current);
         }
-        TimingPoint before = this.lower(current);
+        TimingPoint before = lower(current);
         while(before != null && current.time > time){
             current = before;
-            before = this.lower(current);
+            before = lower(current);
         }
     }
 }

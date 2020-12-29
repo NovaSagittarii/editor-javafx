@@ -2,7 +2,7 @@ package editor.object;
 
 import java.util.Arrays;
 
-public class Note implements Comparable<Note> {
+public class Note extends EditorObject implements Selectable<Note> {
     public int column, time, hitsounds, type = 1;
     public String extras;
     public Integer selected = null;
@@ -39,6 +39,6 @@ public class Note implements Comparable<Note> {
 
     @Override
     public int compareTo(Note o) {
-        return Integer.compare(this.time, o.time);
+        return this.time != o.time ? Integer.compare(this.time, o.time) : Integer.compare(this.column, o.column);
     }
 }

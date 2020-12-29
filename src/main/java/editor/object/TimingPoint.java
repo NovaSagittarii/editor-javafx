@@ -3,7 +3,7 @@ package editor.object;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class TimingPoint implements Comparable<TimingPoint> {
+public class TimingPoint implements Selectable<TimingPoint> {
     public double time, mspb;
     public int meter, sampleSet, sampleIndex, volume, kiai, column = 0;
 
